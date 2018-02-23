@@ -17,23 +17,33 @@ class Character(models.Model):
     max_inventories = models.IntegerField()
     inventory_1_id = models.ForeignKey(
         'Inventory',
-        on_delete = models.SET_DEFAULT
+        on_delete = models.SET_NULL,
+        related_name = 'inventory1',
+        null = True,
     )
     inventory_2_id = models.ForeignKey(
         'Inventory',
-        on_delete = models.SET_DEFAULT
+        on_delete = models.SET_NULL,
+        related_name = 'inventory2',
+        null = True,
     )
     inventory_3_id = models.ForeignKey(
         'Inventory',
-        on_delete = models.SET_DEFAULT
+        on_delete = models.SET_NULL,
+        related_name = 'inventory3',
+        null = True,
     )
     inventory_4_id = models.ForeignKey(
         'Inventory',
-        on_delete = models.SET_DEFAULT
+        on_delete = models.SET_NULL,
+        related_name = 'inventory4',
+        null = True,
     )
     inventory_5_id = models.ForeignKey(
         'Inventory',
-        on_delete = models.SET_DEFAULT
+        on_delete = models.SET_NULL,
+        related_name = 'inventory5',
+        null = True,
     )
     
 
@@ -48,18 +58,34 @@ class Character_Skill(models.Model):
     )
 
 class Skill(models.Model):
-    name = models.CharField()
-    skill_type = models.CharField()
+    name = models.CharField(max_length=30)
+    skill_type = models.CharField(max_length=30)
     value = models.FloatField()
 
 class Skill_SkillDependency(models.Model):
     child_skill = models.ForeignKey(
         'Skill',
         on_delete = models.CASCADE,
+        related_name = "childSkill",
     )
     parent_skill = models.ForeignKey(
         'Skill',
         on_delete = models.CASCADE,
+        related_name = "parentSkill",
+    )
+
+    UNION = "U" # Gaining any child skill unlocks the parent skill.
+    INTERSECTION = "I" # Gaining all child skills unlocks the parent skill.
+
+    DEPENDENCY_TYPES = (
+        (UNION, "union"),
+        (INTERSECTION, "intersection"),
+    )
+
+    dependency_type = models.CharField(
+        max_length = 1,
+        choices = DEPENDENCY_TYPES,
+        default = UNION,
     )
 
 class Inventory(models.Model):
@@ -68,8 +94,23 @@ class Inventory(models.Model):
         on_delete = models.CASCADE,
     )
     inventory_size = models.IntegerField()
-    INVENTORY_TYPES = model.Choices('default', 'smallBag', 'mediumBag', 'largeBag')
-    inventory_type = model.StatusField(choices_name = 'INVENTORY_TYPES')
+
+    DEFAULT = 'DE'
+    SMALLBAG = 'SB'
+    MEDIUMBAG = 'MB'
+    LARGEBAG = 'LB'
+
+    INVENTORY_TYPES = (
+        (DEFAULT, 'default'),
+        (SMALLBAG, 'smallBag'),
+        (MEDIUMBAG, 'mediumBag'),
+        (LARGEBAG, 'largeBag'),
+    )
+    inventory_type = models.CharField(
+        max_length = 2,
+        choices = INVENTORY_TYPES,
+        default = DEFAULT,
+    )
     #This should create a kind of enumeration. There's no number associated with each option,
     #but there are a limited number of options.
 
@@ -79,12 +120,13 @@ class Inventory_GameItem(models.Model):
         on_delete = models.CASCADE,
     )
     game_item_id = models.ForeignKey(
-        'GameItem__static',
+        'GameItem_static',
         on_delete = models.CASCADE,
     )
     crafted_by = models.ForeignKey(
         'Character',
-        on_delete = models.SET_DEFAULT,
+        on_delete = models.SET_NULL,
+        null = True,
     )
 
 class InventoryGameItem_ItemModifier(models.Model):
@@ -99,48 +141,60 @@ class InventoryGameItem_ItemModifier(models.Model):
 
 class ItemModifier(models.Model):
     item_modifier_id = models.ForeignKey(
-        'ItemModifier__static',
+        'ItemModifier_static',
         on_delete = models.CASCADE,
     )
     duration_remainder = models.IntegerField()
     modifier_remainder = models.FloatField()
 
-class ItemModifier__static(models.Model):
-    name = models.CharField()
-    description = models.CharField()
+class ItemModifier_static(models.Model):
+    name = models.CharField(max_length=30)
+    description = models.CharField(max_length=250)
     modifier = models.FloatField()
     duration = models.IntegerField()
 
-class GameItem__static(models.Model):
-    name = models.CharField()
+class GameItem_static(models.Model):
+    name = models.CharField(max_length=30)
     item_type = models.ForeignKey(
-        'ItemType__static',
+        'ItemType_static',
         on_delete = models.CASCADE,
+        related_name = 'itemType',
     )
     max_stack = models.IntegerField()
     value = models.FloatField()
-    RARITIES = models.Choices('common', 'rare', 'legendary')
-    rarity = model.StatusField(choices_name = 'RARITIES')
-    #This should create a kind of enumeration. There's no number associated with each option,
-    #but there are a limited number of options.
+
+    COMMON = 1
+    RARE = 2
+    LEGENDARY = 3
+
+    RARITIES = (
+        (COMMON, 'Common'),
+        (RARE, 'Rare'),
+        (LEGENDARY, 'Legendary'),
+    )
+
+    rarity = models.IntegerField(
+        choices = RARITIES,
+        default = COMMON,
+    )
     
     min_level = models.IntegerField()
     base_durability = models.IntegerField()
     soulbound = models.BooleanField(default=False)
 
-class ItemType__static(models.Model):
-    item_type = models.CharField()
+class ItemType_static(models.Model):
+    item_type = models.CharField(max_length=30)
     game_item_id = models.ForeignKey(
-        'GameItem__static',
+        'GameItem_static',
         on_delete = models.CASCADE,
     )
 
-class ItemModifier__can_effect__ItemType__static(models.Model):
+class ItemModifier_can_effect_ItemType_static(models.Model):
     item_type_id = models.ForeignKey(
-        'ItemType__static',
+        'ItemType_static',
         on_delete = models.CASCADE,
     )
     item_modifier_id = models.ForeignKey(
-        'ItemModifier__static',
+        'ItemModifier_static',
         on_delete = models.CASCADE,
     )

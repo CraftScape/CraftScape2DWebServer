@@ -1,2 +1,7 @@
 runserver.sh
-CraftScape/settings.json
+venv/
+.idea/
+settings.json
+**/*/__pycache__/
+*.cpython-36.pyc
+*.pyc

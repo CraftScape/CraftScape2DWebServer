@@ -16,8 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.conf.urls import include
+from craftscapeinterface import views as interface_views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('CraftScapeAPI.urls'))
+    path('', interface_views.index, name='index'),
+    path('admin/', admin.site.urls, name='admin'),
+    path('api/', include('CraftScapeAPI.urls', namespace='api'))
 ]

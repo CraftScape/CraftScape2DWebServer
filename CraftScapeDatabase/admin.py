@@ -1,18 +1,18 @@
 from django.contrib import admin
 
-from .models import *
+from CraftScapeDatabase.models import Character, Inventory, GameItem, Skill, SkillDependency, CharacterSkill, \
+    GameItemModifier, ItemModifier, StaticItemModifier, StaticGameItem, GameItemType, StaticItemTypeModifier
 
-# Register your models here.
-
+admin.register(Inventory)
 admin.site.register(Character)
-admin.site.register(CharacterSkill)
-admin.site.register(Skill)
-admin.site.register(SkillSkillDependency)
+admin.site.register(GameItem)
 admin.site.register(Inventory)
-admin.site.register(InventoryGameItem)
-admin.site.register(InventoryGameItem_ItemModifier)
+admin.site.register(StaticGameItem)
+admin.site.register(Skill)
+admin.site.register(SkillDependency)
+admin.site.register(CharacterSkill)
+admin.site.register(GameItemModifier)
 admin.site.register(ItemModifier)
-admin.site.register(ItemModifier_static)
-admin.site.register(GameItem_static)
-admin.site.register(ItemType_static)
-admin.site.register(ItemModifier_can_effect_ItemType_static)
+admin.site.register(StaticItemModifier)
+admin.site.register(GameItemType)
+admin.site.register(StaticItemTypeModifier)

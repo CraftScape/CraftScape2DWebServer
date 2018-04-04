@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework import routers
 from CraftScapeAPI import views
-from rest_framework.authtoken import views as auth_views
+# from rest_framework.authtoken import views as auth_views
 
 router = routers.DefaultRouter()
 router.register('user', views.UserViewSet, base_name='user')
@@ -21,5 +21,5 @@ router.register('static_item_type_modifier', views.StaticItemTypeModifierViewSet
 app_name = 'api'
 urlpatterns = [
     path('', include(router.urls)),
-    path('authorize/', auth_views.obtain_auth_token)
+    path('authorize/', views.ObtainAuthToken.as_view())
 ]

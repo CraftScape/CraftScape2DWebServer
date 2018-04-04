@@ -1,10 +1,7 @@
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, generics
-from rest_framework.response import Response
-from rest_framework.views import exception_handler
-from rest_framework.response import Response
+from rest_framework import viewsets
 from CraftScapeDatabase.models import Character, Inventory, GameItem, Skill, SkillDependency, CharacterSkill, \
     GameItemModifier, ItemModifier, StaticItemModifier, StaticGameItem, GameItemType, StaticItemTypeModifier
 from CraftScapeAPI.serializers import UserSerializer, CharacterSerializer, InventorySerializer, GameItemSerializer, \
@@ -14,35 +11,6 @@ from CraftScapeAPI.serializers import UserSerializer, CharacterSerializer, Inven
 from django_filters.rest_framework import DjangoFilterBackend
 from operator import __or__ as OR
 from functools import reduce
-
-from rest_framework import parsers, renderers
-from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.serializers import AuthTokenSerializer
-from rest_framework.views import APIView
-
-
-class ObtainAuthToken(APIView):
-    throttle_classes = ()
-    permission_classes = ()
-    parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
-    renderer_classes = (renderers.JSONRenderer,)
-    serializer_class = AuthTokenSerializer
-
-    def post(self, request, *args, **kwargs):
-        if request.data == {}:
-            data = {
-                'username': request.query_params.get('username', ''),
-                'password': request.query_params.get('password', '')
-            }
-        else:
-            data = request.data
-
-        serializer = self.serializer_class(data=data,
-                                           context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key})
 
 
 class UserViewSet(viewsets.ModelViewSet):

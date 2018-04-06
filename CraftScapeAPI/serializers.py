@@ -41,9 +41,12 @@ class StaticItemModifierSerializer(serializers.ModelSerializer):
 
 
 class StaticGameItemSerializer(serializers.ModelSerializer):
+    item_type = serializers.StringRelatedField(many=True, read_only=True)
+
     class Meta:
         model = StaticGameItem
-        fields = '__all__'
+        fields = ('id', 'name', 'sprite_name', 'description', 'max_stack', 'value', 'equipable', 'rarity', 'min_level',
+                  'base_durability', 'soulbound', 'power', 'defense', 'vitality', 'heal_amount', 'item_type')
 
 
 class GameItemTypeSerializer(serializers.ModelSerializer):

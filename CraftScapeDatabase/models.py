@@ -174,6 +174,17 @@ class GameItem(models.Model):
         db_table = 'game_item'
 
 
+class GameItemType(models.Model):
+    static_game_item = models.ForeignKey(StaticGameItem, on_delete=models.PROTECT, related_name='item_type')
+    item_type = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.item_type
+
+    class Meta:
+        db_table = 'game_item_type'
+
+
 class GameItemModifier(models.Model):
     game_item = models.ForeignKey('GameItem', on_delete=models.CASCADE)
     modifier = models.ForeignKey('ItemModifier', on_delete=models.CASCADE)
@@ -208,17 +219,6 @@ class StaticItemModifier(models.Model):
 
     class Meta:
         db_table = 'item_modifier_static'
-
-
-class GameItemType(models.Model):
-    static_game_item = models.ForeignKey(StaticGameItem, on_delete=models.PROTECT, related_name='item_type')
-    item_type = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.item_type
-
-    class Meta:
-        db_table = 'game_item_type'
 
 
 class StaticItemTypeModifier(models.Model):

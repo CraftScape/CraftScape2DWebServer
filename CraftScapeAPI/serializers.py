@@ -63,7 +63,8 @@ class GameItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GameItem
-        fields = ('id', 'url', 'inventory', 'inventory_position', 'created_by', 'created_by_name', 'static_game_item')
+        fields = ('id', 'url', 'inventory', 'inventory_position', 'stack_size', 'created_by', 'created_by_name',
+                  'static_game_item')
 
 
 class InventorySerializer(serializers.ModelSerializer):

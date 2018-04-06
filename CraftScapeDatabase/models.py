@@ -27,7 +27,7 @@ class CharacterSkill(models.Model):
     skill = models.ForeignKey('Skill', on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.char_id + ": " + self.skill_id
+        return "{0} : {1}".format(self.character, self.skill)
 
     class Meta:
         db_table = 'character_skill'
@@ -37,6 +37,7 @@ class Skill(models.Model):
     name = models.CharField(max_length=30)
     skill_type = models.CharField(max_length=30)
     value = models.FloatField()
+    static_game_item = models.ForeignKey('StaticGameItem', on_delete=models.CASCADE, related_name='skill')
 
     def __str__(self):
         return self.name
@@ -93,7 +94,7 @@ class Inventory(models.Model):
         curr_positions = self.get_available_positions()
         remaining_pos = list(filter(lambda x: x not in curr_positions, list(range(1, self.character.max_inventories + 1))))
         if len(remaining_pos) == 0:
-            raise Exception('Character has reached their maximum number of inventories')
+            raise Exception('maximum inventories reached.')
         return remaining_pos[0]
 
     def position_is_available(self):

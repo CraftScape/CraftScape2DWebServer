@@ -13,27 +13,33 @@ from operator import __or__ as OR
 from functools import reduce
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class BaseModelViewSet(viewsets.ModelViewSet):
+    def find_all(self):
+        find_all = self.request.query_params.get('find_all', '')
+        return find_all.lower() == 'true'
+
+
+class UserViewSet(BaseModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all().order_by('id')
 
     def get_queryset(self):
-        if self.request.user.is_staff and 'find_all' in self.request.query_params:
+        if self.request.user.is_staff and self.find_all():
             return self.queryset
         return self.queryset.filter(pk=self.request.user.pk)
 
 
-class CharacterViewSet(viewsets.ModelViewSet):
+class CharacterViewSet(BaseModelViewSet):
     serializer_class = CharacterSerializer
     queryset = Character.objects.all().order_by('id')
 
     def get_queryset(self):
-        if self.request.user.is_staff and 'find_all' in self.request.query_params:
+        if self.request.user.is_staff and self.find_all():
             return self.queryset
         return self.queryset.filter(user=self.request.user.id)
 
 
-class InventoryViewSet(viewsets.ModelViewSet):
+class InventoryViewSet(BaseModelViewSet):
     serializer_class = InventorySerializer
     queryset = Inventory.objects.all().order_by('position')
     filter_fields = ('character', 'position', 'size')
@@ -41,9 +47,8 @@ class InventoryViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Inventory.objects.all().order_by('position')
-        find_all = self.request.query_params.get('find_all', False)
 
-        if find_all and self.request.user.is_staff:
+        if self.find_all() and self.request.user.is_staff:
             return queryset
 
         characters = Character.objects.filter(user=self.request.user.id)

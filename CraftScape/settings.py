@@ -11,10 +11,18 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+import json
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Loads settings configuration data from settings.json file
+data = {}
+try:
+    with open(os.path.join(BASE_DIR, 'CraftScape', 'settings.json')) as data_file:
+        data = json.load(data_file)
+except IOError:
+    print("You need to setup the settings data file (see instructions in base.py file.)")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
@@ -96,11 +104,11 @@ WSGI_APPLICATION = 'CraftScape.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ['CRAFTSCAPE_DB_NAME'],
-        'USER': os.environ['CRAFTSCAPE_DB_USER'],
-        'PASSWORD': os.environ['CRAFTSCAPE_DB_PASSWORD'],
-        'HOST': os.environ['CRAFTSCAPE_DB_HOST'],
-        'PORT': 3306
+        'NAME': data['database']['name'],
+        'USER': data['database']['user'],
+        'PASSWORD': data['database']['password'],
+        'HOST': data['database']['host'],
+        'PORT': data['database']['port']
     }
 }
 

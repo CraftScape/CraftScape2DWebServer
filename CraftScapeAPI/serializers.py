@@ -83,7 +83,7 @@ class CharacterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Character
-        fields = ('user', 'name', 'health', 'max_health', 'currency', 'walk_speed', 'inventories')
+        fields = ('id', 'user', 'name', 'health', 'max_health', 'currency', 'walk_speed', 'inventories')
 
 
 class UserSerializer(serializers.ModelSerializer):

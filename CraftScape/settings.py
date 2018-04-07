@@ -28,7 +28,7 @@ except IOError:
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '@jl@mp6hj6_h4)x=rjpktcgv@3d#+l3o9_o*2qz(tdiox9y%rx'
+SECRET_KEY = data["secret_key"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

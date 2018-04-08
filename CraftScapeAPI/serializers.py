@@ -69,6 +69,19 @@ class GameItemSerializer(serializers.ModelSerializer):
         fields = ('id', 'url', 'inventory', 'inventory_position', 'stack_size', 'created_by', 'created_by_name',
                   'static_game_item')
 
+    def create(self, validated_data):
+        static_game_item_id = self.context['request'].data['static_game_item']
+        static_game_item = StaticGameItem.objects.get(pk=static_game_item_id)
+        data = {
+            "inventory": validated_data.pop('inventory'),
+            "inventory_position": validated_data.pop('inventory_position'),
+            "stack_size": validated_data.pop('stack_size'),
+            "created_by": validated_data.pop("created_by"),
+            "static_game_item": static_game_item
+        }
+        item = GameItem.objects.create(**data)
+        return item
+
 
 class InventorySerializer(serializers.ModelSerializer):
     game_items = GameItemSerializer(many=True, read_only=True)

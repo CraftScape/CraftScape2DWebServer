@@ -4,6 +4,7 @@ from django.shortcuts import reverse
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
+from rest_framework.exceptions import MethodNotAllowed
 
 
 class Character(models.Model):
@@ -17,10 +18,23 @@ class Character(models.Model):
     equipment = models.OneToOneField('Equipment', on_delete=models.CASCADE, related_name='character')
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        equipment = Equipment()
-        equipment.save()
-        self.equipment = equipment
+        inventory = None
+        if not self.pk:
+            if not self.equipment:
+                equipment = Equipment()
+                equipment.save()
+                self.equipment = equipment
+
+            inventory = Inventory(position=0, size=16)
+
         super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+        if inventory:
+            inventory.character = self
+            inventory.save()
+
+    def delete(self, using=None, keep_parents=False):
+        raise MethodNotAllowed('Characters may not be deleted once created')
 
     def __str__(self):
         return self.name
@@ -156,7 +170,7 @@ class StaticGameItem(models.Model):
 
 
 class GameItem(models.Model):
-    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE, related_name='game_items')
+    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE, related_name='game_items', null=True, blank=True)
     static_game_item = models.ForeignKey(StaticGameItem, on_delete=models.CASCADE, related_name='static_game_item')
     created_by = models.ForeignKey(Character, on_delete=models.SET_NULL, related_name='created_by', blank=True, null=True)
     inventory_position = models.IntegerField()
@@ -256,7 +270,7 @@ class Equipment(models.Model):
     neck = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='neck', null=True, blank=True)
     head = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='head', null=True, blank=True)
     chest = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='chest', null=True, blank=True)
-    weapon = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='weapon', null=True, blank=True)
+    main_hand = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='main_hand', null=True, blank=True)
     back = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='back', null=True, blank=True)
     hands = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='hands', null=True, blank=True)
     feet = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='feet', null=True, blank=True)
@@ -271,8 +285,8 @@ class Equipment(models.Model):
             raise serializers.ValidationError("Cannot equip {0} in head slot".format(self.head.name))
         if self.chest and 'chest' not in self.chest.types:
             raise serializers.ValidationError("Cannot equip {0} in chest slot".format(self.chest.name))
-        if self.weapon and 'weapon' not in self.weapon.types:
-            raise serializers.ValidationError("Cannot equip {0} in weapon slot".format(self.weapon.name))
+        if self.main_hand and 'weapon' not in self.main_hand.types:
+            raise serializers.ValidationError("Cannot equip {0} in main_hand slot".format(self.main_hand.name))
         if self.back and 'back' not in self.back.types:
             raise serializers.ValidationError("Cannot equip {0} in back slot".format(self.back.name))
         if self.hands and 'hands' not in self.hands.types:

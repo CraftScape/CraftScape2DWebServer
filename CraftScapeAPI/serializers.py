@@ -110,16 +110,16 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class EquipmentSerializer(serializers.ModelSerializer):
-    ring = GameItemSerializer()
-    neck = GameItemSerializer(many=False)
-    head = GameItemSerializer(many=False)
-    chest = GameItemSerializer(many=False)
-    weapon = GameItemSerializer(many=False)
-    back = GameItemSerializer(many=False)
-    hands = GameItemSerializer(many=False)
-    feet = GameItemSerializer(many=False)
-    legs = GameItemSerializer(many=False)
+    ring = GameItemSerializer(required=False, allow_null=True)
+    neck = GameItemSerializer(many=False, required=False, allow_null=True)
+    head = GameItemSerializer(many=False, required=False, allow_null=True)
+    chest = GameItemSerializer(many=False, required=False, allow_null=True)
+    main_hand = GameItemSerializer(many=False, required=False, allow_null=True)
+    back = GameItemSerializer(many=False, required=False, allow_null=True)
+    hands = GameItemSerializer(many=False, required=False, allow_null=True)
+    feet = GameItemSerializer(many=False, required=False, allow_null=True)
+    legs = GameItemSerializer(many=False, required=False, allow_null=True)
 
     class Meta:
         model = Equipment
-        fields = ('id', 'ring', 'neck', 'head', 'chest', 'weapon', 'back', 'hands', 'feet', 'legs')
+        fields = ('id', 'ring', 'neck', 'head', 'chest', 'main_hand', 'back', 'hands', 'feet', 'legs')

@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import reverse
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from rest_framework import serializers
 
 
 class Character(models.Model):
@@ -13,6 +14,13 @@ class Character(models.Model):
     currency = models.IntegerField(default=0)
     walk_speed = models.FloatField(default=10)
     max_inventories = models.IntegerField(default=5)
+    equipment = models.OneToOneField('Equipment', on_delete=models.CASCADE, related_name='character')
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        equipment = Equipment()
+        equipment.save()
+        self.equipment = equipment
+        super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     def __str__(self):
         return self.name
@@ -84,7 +92,7 @@ class Inventory(models.Model):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.id is None or self.position < 0 or not self.position_is_available():
             self.position = self.get_next_position()
-        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     def get_available_positions(self):
         return [inv.position for inv in Inventory.objects.filter(character=self.character.id)]
@@ -135,6 +143,11 @@ class StaticGameItem(models.Model):
     vitality = models.FloatField(default=0)
     heal_amount = models.FloatField(default=0)
 
+    @property
+    def types(self):
+        item_types = GameItemType.objects.filter(static_game_item=self.pk)
+        return [t.item_type for t in item_types]
+
     def __str__(self):
         return self.name
 
@@ -161,6 +174,12 @@ class GameItem(models.Model):
     def url(self):
         url = reverse('api:game_item-detail', kwargs={'pk': self.pk})
         return "{base_url}{url}".format(base_url=settings.BASE_URL, url=url)
+
+    @property
+    def types(self):
+        game_item_types = GameItemType.objects.filter(static_game_item=self.static_game_item.pk)
+        return [t.item_type for t in game_item_types]
+
 
     def __str__(self):
         return self.inventory.__str__() + ": " + self.static_game_item.__str__()
@@ -230,3 +249,46 @@ class StaticItemTypeModifier(models.Model):
 
     class Meta:
         db_table = 'static_item_type_modifier'
+
+
+class Equipment(models.Model):
+    ring = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='ring', null=True, blank=True)
+    neck = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='neck', null=True, blank=True)
+    head = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='head', null=True, blank=True)
+    chest = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='chest', null=True, blank=True)
+    weapon = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='weapon', null=True, blank=True)
+    back = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='back', null=True, blank=True)
+    hands = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='hands', null=True, blank=True)
+    feet = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='feet', null=True, blank=True)
+    legs = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='legs', null=True, blank=True)
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.ring and 'ring' not in self.ring.types:
+            raise serializers.ValidationError("Cannot equip {0} in ring slot".format(self.ring.name))
+        if self.neck and 'neck' not in self.neck.types:
+            raise serializers.ValidationError("Cannot equip {0} in neck slot".format(self.neck.name))
+        if self.head and 'head' not in self.head.types:
+            raise serializers.ValidationError("Cannot equip {0} in head slot".format(self.head.name))
+        if self.chest and 'chest' not in self.chest.types:
+            raise serializers.ValidationError("Cannot equip {0} in chest slot".format(self.chest.name))
+        if self.weapon and 'weapon' not in self.weapon.types:
+            raise serializers.ValidationError("Cannot equip {0} in weapon slot".format(self.weapon.name))
+        if self.back and 'back' not in self.back.types:
+            raise serializers.ValidationError("Cannot equip {0} in back slot".format(self.back.name))
+        if self.hands and 'hands' not in self.hands.types:
+            raise serializers.ValidationError("Cannot equip {0} in hands slot".format(self.hands.name))
+        if self.feet and 'feet' not in self.feet.types:
+            raise serializers.ValidationError("Cannot equip {0} in feet slot".format(self.feet.name))
+        if self.legs and 'legs' not in self.legs.types:
+            raise serializers.ValidationError("Cannot equip {0} in legs slot".format(self.legs.name))
+        super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+    def __str__(self):
+        try:
+            name = Character.objects.get(equipment=self.id).name
+        except:
+            name = 'NA'
+        return '<Equipment <Owner: {0}>>'.format(name)
+
+    class Meta:
+        db_table = 'equipment'

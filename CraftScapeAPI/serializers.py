@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from CraftScapeDatabase.models import Character, Inventory, GameItem, Skill, SkillDependency, CharacterSkill, \
-    GameItemModifier, ItemModifier, StaticItemModifier, StaticGameItem, GameItemType, StaticItemTypeModifier
+    GameItemModifier, ItemModifier, StaticItemModifier, StaticGameItem, GameItemType, StaticItemTypeModifier, \
+    Equipment
 
 
 class SkillSerializer(serializers.ModelSerializer):
@@ -93,10 +94,11 @@ class InventorySerializer(serializers.ModelSerializer):
 
 class CharacterSerializer(serializers.ModelSerializer):
     inventories = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name='api:inventory-detail')
+    equipment = serializers.HyperlinkedRelatedField(read_only=True, view_name="api:equipment-detail")
 
     class Meta:
         model = Character
-        fields = ('id', 'user', 'name', 'health', 'max_health', 'currency', 'walk_speed', 'inventories')
+        fields = ('id', 'user', 'name', 'health', 'max_health', 'currency', 'walk_speed', 'inventories', 'equipment')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -105,3 +107,19 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'characters')
+
+
+class EquipmentSerializer(serializers.ModelSerializer):
+    ring = GameItemSerializer()
+    neck = GameItemSerializer(many=False)
+    head = GameItemSerializer(many=False)
+    chest = GameItemSerializer(many=False)
+    weapon = GameItemSerializer(many=False)
+    back = GameItemSerializer(many=False)
+    hands = GameItemSerializer(many=False)
+    feet = GameItemSerializer(many=False)
+    legs = GameItemSerializer(many=False)
+
+    class Meta:
+        model = Equipment
+        fields = ('id', 'ring', 'neck', 'head', 'chest', 'weapon', 'back', 'hands', 'feet', 'legs')

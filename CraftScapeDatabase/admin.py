@@ -1,7 +1,8 @@
 from django.contrib import admin
 
 from CraftScapeDatabase.models import Character, Inventory, GameItem, Skill, SkillDependency, CharacterSkill, \
-    GameItemModifier, ItemModifier, StaticItemModifier, StaticGameItem, GameItemType, StaticItemTypeModifier
+    GameItemModifier, ItemModifier, StaticItemModifier, StaticGameItem, GameItemType, StaticItemTypeModifier, \
+    Equipment
 
 admin.register(Inventory)
 admin.site.register(Character)
@@ -16,3 +17,4 @@ admin.site.register(ItemModifier)
 admin.site.register(StaticItemModifier)
 admin.site.register(GameItemType)
 admin.site.register(StaticItemTypeModifier)
+admin.site.register(Equipment)

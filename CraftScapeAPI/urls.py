@@ -17,6 +17,7 @@ router.register('static_item_modifier', views.StaticItemModifierViewSet, base_na
 router.register('static_game_item', views.StaticGameItemViewSet, base_name='static_game_item')
 router.register('game_item_type', views.GameItemTypeViewSet, base_name='game_item_type')
 router.register('static_item_type_modifier', views.StaticItemTypeModifierViewSet, base_name='static_item_type_modifier')
+router.register('equipment', views.EquipmentViewSet, base_name='equipment')
 
 app_name = 'api'
 urlpatterns = [

@@ -3,11 +3,12 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from CraftScapeDatabase.models import Character, Inventory, GameItem, Skill, SkillDependency, CharacterSkill, \
-    GameItemModifier, ItemModifier, StaticItemModifier, StaticGameItem, GameItemType, StaticItemTypeModifier
+    GameItemModifier, ItemModifier, StaticItemModifier, StaticGameItem, GameItemType, StaticItemTypeModifier, \
+    Equipment
 from CraftScapeAPI.serializers import UserSerializer, CharacterSerializer, InventorySerializer, GameItemSerializer, \
     SkillSerializer, SkillDependencySerializer, CharacterSkillSerializer, GameItemModifierSerializer, \
     ItemModifierSerializer, StaticItemModifierSerializer, StaticGameItemSerializer, GameItemTypeSerializer, \
-    StaticItemTypeModifierSerializer
+    StaticItemTypeModifierSerializer, EquipmentSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from operator import __or__ as OR
 from functools import reduce
@@ -46,14 +47,12 @@ class InventoryViewSet(BaseModelViewSet):
     filter_backends = (DjangoFilterBackend,)
 
     def get_queryset(self):
-        queryset = Inventory.objects.all().order_by('position')
-
         if self.find_all() and self.request.user.is_staff:
-            return queryset
+            return self.queryset
 
         characters = Character.objects.filter(user=self.request.user.id)
         character_ids = [Q(character=char.id) for char in characters]
-        queryset = queryset.filter(reduce(OR, character_ids))
+        queryset = self.queryset.filter(reduce(OR, character_ids))
         return queryset
 
 
@@ -94,7 +93,7 @@ class StaticItemModifierViewSet(viewsets.ModelViewSet):
 
 class StaticGameItemViewSet(viewsets.ModelViewSet):
     serializer_class = StaticGameItemSerializer
-    queryset = StaticGameItem.objects.all()
+    queryset = StaticGameItem.objects.all().order_by('name')
 
 
 class GameItemTypeViewSet(viewsets.ModelViewSet):
@@ -107,3 +106,14 @@ class StaticItemTypeModifierViewSet(viewsets.ModelViewSet):
     queryset = StaticItemTypeModifier.objects.all()
 
 
+class EquipmentViewSet(BaseModelViewSet):
+    serializer_class = EquipmentSerializer
+    queryset = Equipment.objects.all().order_by('id')
+
+    def get_queryset(self):
+        if self.request.user.is_staff and self.find_all():
+            return self.queryset
+
+        characters = Character.objects.filter(user=self.request.user.id)
+        character_ids = [Q(character=character.id) for character in characters]
+        return self.queryset.filter(reduce(OR, character_ids))

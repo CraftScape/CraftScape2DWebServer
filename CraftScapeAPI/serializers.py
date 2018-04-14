@@ -1,4 +1,6 @@
+import uuid
 from django.contrib.auth.models import User
+from django.db.models import ManyToOneRel
 from rest_framework import serializers
 from CraftScapeDatabase.models import Character, Inventory, GameItem, Skill, SkillDependency, CharacterSkill, \
     GameItemModifier, ItemModifier, StaticItemModifier, StaticGameItem, GameItemType, StaticItemTypeModifier, \
@@ -42,12 +44,11 @@ class StaticItemModifierSerializer(serializers.ModelSerializer):
 
 
 class StaticGameItemSerializer(serializers.ModelSerializer):
-    item_type = serializers.StringRelatedField(many=True, read_only=True)
+    item_types = serializers.StringRelatedField(many=True, read_only=True)
 
     class Meta:
         model = StaticGameItem
-        fields = ('id', 'name', 'sprite_name', 'description', 'max_stack', 'value', 'equipable', 'rarity', 'min_level',
-                  'base_durability', 'soulbound', 'power', 'defense', 'vitality', 'heal_amount', 'item_type')
+        fields = '__all__'
 
 
 class GameItemTypeSerializer(serializers.ModelSerializer):
@@ -64,20 +65,33 @@ class StaticItemTypeModifierSerializer(serializers.ModelSerializer):
 
 class GameItemSerializer(serializers.ModelSerializer):
     static_game_item = StaticGameItemSerializer(many=False, read_only=True)
+    created_by_name = serializers.ReadOnlyField(read_only=True)
+    created_by = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = GameItem
-        fields = ('id', 'url', 'inventory', 'inventory_position', 'stack_size', 'created_by', 'created_by_name',
-                  'static_game_item')
+        fields = '__all__'
+        extra_kwargs = {
+            'id': {
+                'read_only': True,
+                'required': False
+            },
+            'inventory_position': {
+                'required': False
+            }
+        }
 
     def create(self, validated_data):
         static_game_item_id = self.context['request'].data['static_game_item']
         static_game_item = StaticGameItem.objects.get(pk=static_game_item_id)
+        inventory = Inventory.objects.get(pk=self.context['request'].data['inventory'])
+        created_by = inventory.character
         data = {
-            "inventory": validated_data.pop('inventory'),
+            "uuid": validated_data.pop("uuid"),
             "inventory_position": validated_data.pop('inventory_position'),
             "stack_size": validated_data.pop('stack_size'),
-            "created_by": validated_data.pop("created_by"),
+            "inventory": inventory,
+            "created_by": created_by,
             "static_game_item": static_game_item
         }
         item = GameItem.objects.create(**data)
@@ -111,15 +125,38 @@ class UserSerializer(serializers.ModelSerializer):
 
 class EquipmentSerializer(serializers.ModelSerializer):
     ring = GameItemSerializer(required=False, allow_null=True)
-    neck = GameItemSerializer(many=False, required=False, allow_null=True)
-    head = GameItemSerializer(many=False, required=False, allow_null=True)
-    chest = GameItemSerializer(many=False, required=False, allow_null=True)
-    main_hand = GameItemSerializer(many=False, required=False, allow_null=True)
-    back = GameItemSerializer(many=False, required=False, allow_null=True)
-    hands = GameItemSerializer(many=False, required=False, allow_null=True)
-    feet = GameItemSerializer(many=False, required=False, allow_null=True)
-    legs = GameItemSerializer(many=False, required=False, allow_null=True)
+    neck = GameItemSerializer(required=False, allow_null=True)
+    head = GameItemSerializer(required=False, allow_null=True)
+    shoulders = GameItemSerializer(required=False, allow_null=True)
+    chest = GameItemSerializer(required=False, allow_null=True)
+    main_hand = GameItemSerializer(required=False, allow_null=True)
+    back = GameItemSerializer(required=False, allow_null=True)
+    hands = GameItemSerializer(required=False, allow_null=True)
+    feet = GameItemSerializer(required=False, allow_null=True)
+    legs = GameItemSerializer(required=False, allow_null=True)
 
     class Meta:
         model = Equipment
-        fields = ('id', 'ring', 'neck', 'head', 'chest', 'main_hand', 'back', 'hands', 'feet', 'legs')
+        fields = '__all__'
+        extra_kwargs = {
+            'id': {
+                'read_only': False,
+                'required': True
+            }
+        }
+
+    def update(self, instance, validated_data):
+        field_names = list()
+        for field in Equipment._meta.get_fields():
+            if not isinstance(field, ManyToOneRel) and field.name != 'id':
+                field_names.append(field.name)
+
+        for name in field_names:
+            if name in validated_data and validated_data[name] is not None:
+                setattr(instance, name, GameItem.objects.get(uuid=validated_data[name]['uuid']))
+            else:
+                setattr(instance, name, None)
+
+        instance.save()
+
+        return instance

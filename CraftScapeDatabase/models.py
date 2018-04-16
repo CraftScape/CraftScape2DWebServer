@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from django.shortcuts import reverse
@@ -156,11 +157,11 @@ class StaticGameItem(models.Model):
     defense = models.FloatField(default=0)
     vitality = models.FloatField(default=0)
     heal_amount = models.FloatField(default=0)
+    item_types = models.ManyToManyField('GameItemType', related_name='static_game_item')
 
     @property
-    def types(self):
-        item_types = GameItemType.objects.filter(static_game_item=self.pk)
-        return [t.item_type for t in item_types]
+    def item_type(self):
+        return 'NA'
 
     def __str__(self):
         return self.name
@@ -170,11 +171,21 @@ class StaticGameItem(models.Model):
 
 
 class GameItem(models.Model):
-    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE, related_name='game_items', null=True, blank=True)
-    static_game_item = models.ForeignKey(StaticGameItem, on_delete=models.CASCADE, related_name='static_game_item')
+    """
+        Game Item
+    """
+    uuid = models.UUIDField(verbose_name='uuid', default=uuid.uuid4)
+    inventory = models.ForeignKey(Inventory, on_delete=models.SET_NULL, related_name='game_items', null=True, blank=True)
+    static_game_item = models.ForeignKey(StaticGameItem, on_delete=models.SET_NULL, related_name='static_game_item', null=True)
     created_by = models.ForeignKey(Character, on_delete=models.SET_NULL, related_name='created_by', blank=True, null=True)
     inventory_position = models.IntegerField()
     stack_size = models.IntegerField(default=1)
+
+    @property
+    def types(self):
+        sgi = StaticGameItem.objects.get(pk=self.static_game_item.pk)
+        item_types = sgi.item_types.all()
+        return [t.item_type for t in item_types]
 
     @property
     def name(self):
@@ -189,12 +200,6 @@ class GameItem(models.Model):
         url = reverse('api:game_item-detail', kwargs={'pk': self.pk})
         return "{base_url}{url}".format(base_url=settings.BASE_URL, url=url)
 
-    @property
-    def types(self):
-        game_item_types = GameItemType.objects.filter(static_game_item=self.static_game_item.pk)
-        return [t.item_type for t in game_item_types]
-
-
     def __str__(self):
         return self.inventory.__str__() + ": " + self.static_game_item.__str__()
 
@@ -208,7 +213,9 @@ class GameItem(models.Model):
 
 
 class GameItemType(models.Model):
-    static_game_item = models.ForeignKey(StaticGameItem, on_delete=models.PROTECT, related_name='item_type')
+    """
+    Item Types
+    """
     item_type = models.CharField(max_length=255)
 
     def __str__(self):
@@ -266,26 +273,29 @@ class StaticItemTypeModifier(models.Model):
 
 
 class Equipment(models.Model):
-    ring = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='ring', null=True, blank=True)
-    neck = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='neck', null=True, blank=True)
-    head = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='head', null=True, blank=True)
-    chest = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='chest', null=True, blank=True)
-    main_hand = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='main_hand', null=True, blank=True)
-    back = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='back', null=True, blank=True)
-    hands = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='hands', null=True, blank=True)
-    feet = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='feet', null=True, blank=True)
-    legs = models.ForeignKey(GameItem, on_delete=models.CASCADE, related_name='legs', null=True, blank=True)
+    ring = models.ForeignKey(GameItem, on_delete=models.SET_NULL, related_name='ring', null=True, blank=True)
+    neck = models.ForeignKey(GameItem, on_delete=models.SET_NULL, related_name='neck', null=True, blank=True)
+    head = models.ForeignKey(GameItem, on_delete=models.SET_NULL, related_name='head', null=True, blank=True)
+    shoulders = models.ForeignKey(GameItem, on_delete=models.SET_NULL, related_name='shoulders', null=True, blank=True)
+    chest = models.ForeignKey(GameItem, on_delete=models.SET_NULL, related_name='chest', null=True, blank=True)
+    main_hand = models.ForeignKey(GameItem, on_delete=models.SET_NULL, related_name='main_hand', null=True, blank=True)
+    back = models.ForeignKey(GameItem, on_delete=models.SET_NULL, related_name='back', null=True, blank=True)
+    hands = models.ForeignKey(GameItem, on_delete=models.SET_NULL, related_name='hands', null=True, blank=True)
+    feet = models.ForeignKey(GameItem, on_delete=models.SET_NULL, related_name='feet', null=True, blank=True)
+    legs = models.ForeignKey(GameItem, on_delete=models.SET_NULL, related_name='legs', null=True, blank=True)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.ring and 'ring' not in self.ring.types:
+        if self.ring and 'ring' not in self.ring.static_game_item.item_types:
             raise serializers.ValidationError("Cannot equip {0} in ring slot".format(self.ring.name))
         if self.neck and 'neck' not in self.neck.types:
             raise serializers.ValidationError("Cannot equip {0} in neck slot".format(self.neck.name))
         if self.head and 'head' not in self.head.types:
             raise serializers.ValidationError("Cannot equip {0} in head slot".format(self.head.name))
+        if self.shoulders and 'shoulders' not in self.shoulders.types:
+            raise serializers.ValidationError("Cannot equip {0} in shoulders slot".format(self.head.name))
         if self.chest and 'chest' not in self.chest.types:
             raise serializers.ValidationError("Cannot equip {0} in chest slot".format(self.chest.name))
-        if self.main_hand and 'weapon' not in self.main_hand.types:
+        if self.main_hand and 'mainHand' not in self.main_hand.types:
             raise serializers.ValidationError("Cannot equip {0} in main_hand slot".format(self.main_hand.name))
         if self.back and 'back' not in self.back.types:
             raise serializers.ValidationError("Cannot equip {0} in back slot".format(self.back.name))

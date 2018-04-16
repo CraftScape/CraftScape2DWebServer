@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import json
+import logging
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -22,7 +23,8 @@ try:
     with open(os.path.join(BASE_DIR, 'CraftScape', 'settings.json')) as data_file:
         data = json.load(data_file)
 except IOError:
-    print("You need to setup the settings data file (see instructions in base.py file.)")
+    logging.error("You need to setup the settings data file. If you don't have this file, make a copy of "
+                  "'settings_template.json' and name it 'settings.json'. Place your configurations in this new file.")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
@@ -33,7 +35,7 @@ SECRET_KEY = data["secret_key"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 APPEND_SLASH = True
 
@@ -102,16 +104,24 @@ WSGI_APPLICATION = 'CraftScape.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': data['database']['name'],
-        'USER': data['database']['user'],
-        'PASSWORD': data['database']['password'],
-        'HOST': data['database']['host'],
-        'PORT': data['database']['port']
+if data['database']['engine'] == 'django.db.backends.sqlite3':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, data['database']['name'])
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': data['database']['engine'],
+            'NAME': data['database']['name'],
+            'USER': data['database']['user'],
+            'PASSWORD': data['database']['password'],
+            'HOST': data['database']['host'],
+            'PORT': data['database']['port']
+        }
+    }
 
 
 # Password validation

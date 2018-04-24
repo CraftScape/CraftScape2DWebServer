@@ -4,25 +4,7 @@ from django.db.models import ManyToOneRel
 from rest_framework import serializers
 from CraftScapeDatabase.models import Character, Inventory, GameItem, Skill, SkillDependency, CharacterSkill, \
     GameItemModifier, ItemModifier, StaticItemModifier, StaticGameItem, GameItemType, StaticItemTypeModifier, \
-    Equipment
-
-
-class SkillSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Skill
-        fields = '__all__'
-
-
-class SkillDependencySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SkillDependency
-        fields = '__all__'
-
-
-class CharacterSkillSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CharacterSkill
-        fields = '__all__'
+    Equipment, Ingredient
 
 
 class GameItemModifierSerializer(serializers.ModelSerializer):
@@ -112,7 +94,7 @@ class CharacterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Character
-        fields = ('id', 'user', 'name', 'health', 'max_health', 'currency', 'walk_speed', 'inventories', 'equipment')
+        fields = ('id', 'user', 'name', 'health', 'max_health', 'currency', 'walk_speed', 'inventories', 'equipment', 'experience')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -160,3 +142,34 @@ class EquipmentSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class IngredientSerializer(serializers.ModelSerializer):
+    static_game_item = StaticGameItemSerializer(many=False, read_only=True)
+    
+    class Meta:
+        model = Ingredient
+        fields = '__all__'
+
+
+class SkillSerializer(serializers.ModelSerializer):
+    static_game_item = StaticGameItemSerializer(many=False, read_only=True)
+    ingredients = IngredientSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Skill
+        fields = '__all__'
+
+
+class SkillDependencySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SkillDependency
+        fields = '__all__'
+
+
+class CharacterSkillSerializer(serializers.ModelSerializer):
+    skill = SkillSerializer(many=False, read_only=True)
+    
+    class Meta:
+        model = CharacterSkill
+        fields = '__all__'

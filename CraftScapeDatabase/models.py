@@ -17,14 +17,15 @@ class Character(models.Model):
     walk_speed = models.FloatField(default=10)
     max_inventories = models.IntegerField(default=5)
     equipment = models.OneToOneField('Equipment', on_delete=models.CASCADE, related_name='character')
+    x_pos = models.FloatField(blank=True, null=True)
+    y_pos = models.FloatField(blank=True, null=True)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         inventory = None
         if not self.pk:
-            if not self.equipment:
-                equipment = Equipment()
-                equipment.save()
-                self.equipment = equipment
+            equipment = Equipment()
+            equipment.save()
+            self.equipment = equipment
 
             inventory = Inventory(position=0, size=16)
 
@@ -285,7 +286,7 @@ class Equipment(models.Model):
     legs = models.ForeignKey(GameItem, on_delete=models.SET_NULL, related_name='legs', null=True, blank=True)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.ring and 'ring' not in self.ring.static_game_item.item_types:
+        if self.ring and 'ring' not in self.ring.types:
             raise serializers.ValidationError("Cannot equip {0} in ring slot".format(self.ring.name))
         if self.neck and 'neck' not in self.neck.types:
             raise serializers.ValidationError("Cannot equip {0} in neck slot".format(self.neck.name))

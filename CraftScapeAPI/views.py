@@ -35,6 +35,10 @@ class CharacterViewSet(BaseModelViewSet):
     serializer_class = CharacterSerializer
     queryset = Character.objects.all().order_by('id')
 
+    def get_object(self):
+        character = super().get_object()
+        return character
+
     def get_queryset(self):
         if self.request.user.is_staff and self.find_all():
             return self.queryset
@@ -60,6 +64,15 @@ class InventoryViewSet(BaseModelViewSet):
 class GameItemViewSet(viewsets.ModelViewSet):
     serializer_class = GameItemSerializer
     queryset = GameItem.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        data = {
+            'uuid': request.data['uuid'],
+            'inventory': request.data['inventory'],
+            'inventory_position': request.data['inventory_position'],
+            'static_game_item_id': request.data['static_game_item']
+        }
+        return GameItem.objects.create(**data)
 
 
 class SkillViewSet(viewsets.ModelViewSet):
@@ -118,70 +131,3 @@ class EquipmentViewSet(BaseModelViewSet):
         characters = Character.objects.filter(user=self.request.user.id)
         character_ids = [Q(character=character.id) for character in characters]
         return self.queryset.filter(reduce(OR, character_ids))
-
-    # def perform_update(self, serializer):
-    #     super().perform_update(serializer)
-
-    def update(self, request, pk=None):
-        return super().update(request, pk=pk)
-    #     instance = self.get_object()
-    #
-    #     data = dict()
-    #     for key, value in request.data.items():
-    #         if value and key != 'id':
-    #             data[key] = GameItem.objects.get(pk=value)
-    #         else:
-    #             data[key] = None
-    #
-    #     # serializer = self.get_serializer(instance, data=data)
-    #
-    #     if 'ring' in data:
-    #         instance.ring = data['ring']
-    #     else:
-    #         data['ring'] = None
-    #     if 'neck' in data:
-    #         instance.neck = data['neck']
-    #     else:
-    #         data['neck'] = None
-    #     if 'head' in data:
-    #         instance.head = data['head']
-    #     else:
-    #         data['head'] = None
-    #     if 'chest' in data:
-    #         instance.chest = data['chest']
-    #     else:
-    #         data['chest'] = None
-    #     if 'main_hand' in data:
-    #         instance.main_hand = data['main_hand']
-    #     else:
-    #         data['main_hand'] = None
-    #     if 'back' in data:
-    #         instance.back = data['back']
-    #     else:
-    #         data['back'] = None
-    #     if 'hands' in data:
-    #         instance.hands = data['hands']
-    #     else:
-    #         data['hands'] = None
-    #     if 'feet' in data:
-    #         instance.feet = data['feet']
-    #     else:
-    #         data['feet'] = None
-    #     if 'legs' in data:
-    #         instance.legs = data['legs']
-    #     else:
-    #         data['legs'] = None
-    #
-    #     instance.save()
-    #
-    #     for key, value in data.items():
-    #         if value:
-    #             data[key] = GameItem.objects.filter(pk=value.pk).values().first()
-    #             data[key]['static_game_item'] = StaticGameItem.objects.filter(pk=data[key]['static_game_item_id']).values().first()
-    #             data[key]['inventory'] = data[key]['inventory_id']
-    #             del data[key]['inventory_id']
-    #             del data[key]['static_game_item_id']
-    #
-    #     data['id'] = instance.pk
-    #
-    #     return Response(data)

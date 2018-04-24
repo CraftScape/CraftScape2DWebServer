@@ -112,7 +112,23 @@ class CharacterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Character
-        fields = ('id', 'user', 'name', 'health', 'max_health', 'currency', 'walk_speed', 'inventories', 'equipment')
+        fields = '__all__'
+        extra_kwargs = {
+            'name': {
+                'read_only': True,
+                'required': False
+            },
+            'user': {
+                'read_only': True,
+                'required': False
+            }
+        }
+
+    def create(self, validated_data):
+        request = self.context['request']
+        name = request.data['name']
+        user = request.user
+        return Character.objects.create(name=name, user=user)
 
 
 class UserSerializer(serializers.ModelSerializer):

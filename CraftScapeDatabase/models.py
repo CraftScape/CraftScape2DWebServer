@@ -19,6 +19,7 @@ class Character(models.Model):
     equipment = models.OneToOneField('Equipment', on_delete=models.CASCADE, related_name='character')
     x_pos = models.FloatField(blank=True, null=True)
     y_pos = models.FloatField(blank=True, null=True)
+    experience = models.IntegerField(default=0)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         inventory = None
@@ -46,7 +47,7 @@ class Character(models.Model):
 
 
 class CharacterSkill(models.Model):
-    character = models.ForeignKey('Character', on_delete=models.CASCADE)
+    character = models.ForeignKey('Character', on_delete=models.CASCADE, related_name="skills")
     skill = models.ForeignKey('Skill', on_delete=models.CASCADE)
 
     def __str__(self):
@@ -57,21 +58,34 @@ class CharacterSkill(models.Model):
 
 
 class Skill(models.Model):
-    name = models.CharField(max_length=30)
     skill_type = models.CharField(max_length=30)
-    value = models.FloatField()
+    exp_cost = models.FloatField()
+    exp_reward = models.FloatField()
     static_game_item = models.ForeignKey('StaticGameItem', on_delete=models.CASCADE, related_name='skill')
+    quantity = models.IntegerField()
 
     def __str__(self):
-        return self.name
+        return "{0}".format(self.static_game_item)
 
     class Meta:
         db_table = 'skill'
 
 
+class Ingredient(models.Model):
+    skill = models.ForeignKey('Skill', on_delete=models.CASCADE, related_name="ingredients")
+    static_game_item = models.ForeignKey('StaticGameItem', on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+
+    def __str__(self):
+        return "{0} requires {1} x {2}".format(self.skill, self.static_game_item, self.quantity)
+
+    class Meta:
+        db_table="ingredient"
+
+
 class SkillDependency(models.Model):
-    child_skill = models.ForeignKey('Skill', on_delete=models.CASCADE, related_name="childSkill", )
-    parent_skill = models.ForeignKey('Skill', on_delete=models.CASCADE, related_name="parentSkill", )
+    child_skill = models.ForeignKey('Skill', on_delete=models.CASCADE, related_name="childSkill")
+    parent_skill = models.ForeignKey('Skill', on_delete=models.CASCADE, related_name="parentSkill")
 
     UNION = "U"  # Gaining any child skill unlocks the parent skill.
     INTERSECTION = "I"  # Gaining all child skills unlocks the parent skill.

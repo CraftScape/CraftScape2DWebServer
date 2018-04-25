@@ -65,14 +65,18 @@ class GameItemViewSet(viewsets.ModelViewSet):
     serializer_class = GameItemSerializer
     queryset = GameItem.objects.all()
 
-    def create(self, request, *args, **kwargs):
-        data = {
-            'uuid': request.data['uuid'],
-            'inventory': request.data['inventory'],
-            'inventory_position': request.data['inventory_position'],
-            'static_game_item_id': request.data['static_game_item']
-        }
-        return GameItem.objects.create(**data)
+    # def create(self, request, *args, **kwargs):
+    #     static_game_item_id = request.data['static_game_item']
+    #     inventory_id = request.data['inventory']
+    #     static_game_item = StaticGameItem.objects.get(id=static_game_item_id)
+    #     inventory = Inventory.objects.get(id=inventory_id)
+    #     data = {
+    #         'uuid': request.data['uuid'],
+    #         'inventory': inventory,
+    #         'inventory_position': request.data['inventory_position'],
+    #         'static_game_item': static_game_item
+    #     }
+    #     return GameItem.objects.create(**data)
 
 
 class SkillViewSet(viewsets.ModelViewSet):

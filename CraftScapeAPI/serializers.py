@@ -168,8 +168,9 @@ class SkillDependencySerializer(serializers.ModelSerializer):
 
 
 class CharacterSkillSerializer(serializers.ModelSerializer):
-    skill = SkillSerializer(many=False, read_only=True)
-    
+    #skill = SkillSerializer(many=False, read_only=True)
+    #skill_url = serializers.HyperlinkRelatedField(many=False, read_only=True, view_name='api:skill')
     class Meta:
         model = CharacterSkill
-        fields = '__all__'
+        #fields = '__all__'
+        fields = ['skill', 'character']
